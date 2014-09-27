@@ -28,6 +28,8 @@ import com.cloudbees.syslog.MessageFormat;
 import com.cloudbees.syslog.Severity;
 import com.cloudbees.syslog.integration.jul.SyslogHandler;
 import com.cloudbees.syslog.integration.jul.util.LevelHelper;
+import com.cloudbees.syslog.sender.SyslogMessageSender;
+import com.cloudbees.syslog.sender.TcpSyslogMessageSender;
 import com.cloudbees.syslog.sender.UdpSyslogMessageSender;
 import hudson.Extension;
 import hudson.util.ListBoxModel;
@@ -56,12 +58,47 @@ import java.util.logging.Logger;
 @Extension
 public class SyslogLoggerPlugin extends GlobalConfiguration {
 
+    public static final SyslogTransport DEFAULT_SYSLOG_TRANSPORT = SyslogTransport.UDP;
     public static final int DEFAULT_SYSLOG_SERVER_PORT = 514;
     public static final Level DEFAULT_LEVEL_FILTER = Level.FINE;
     public static final String DEFAULT_APP_NAME = "jenkins";
     public static final Facility DEFAULT_FACILITY = Facility.USER;
     public static final MessageFormat DEFAULT_MESSAGE_FORMAT = MessageFormat.RFC_3164;
 
+    enum SyslogTransport {
+        UDP("UDP") {
+            @Override
+            public SyslogMessageSender create() {
+                return new UdpSyslogMessageSender();
+            }
+        }, TCP("TCP"){
+            @Override
+            public SyslogMessageSender create() {
+                return new TcpSyslogMessageSender();
+            }
+        }, TCP_SSL("TCP + SSL"){
+            @Override
+            public SyslogMessageSender create() {
+                TcpSyslogMessageSender tcpSyslogMessageSender = new TcpSyslogMessageSender();
+                tcpSyslogMessageSender.setSsl(true);
+                return tcpSyslogMessageSender;
+            }
+        };
+
+        SyslogTransport(String label) {
+            this.label = label;
+        }
+
+        final String label;
+
+        public String label() {
+            return label;
+        }
+
+        public abstract SyslogMessageSender create();
+    }
+
+    private SyslogTransport syslogTransport;
     private String syslogServerHostname;
     private int syslogServerPort = DEFAULT_SYSLOG_SERVER_PORT;
     private Level levelFilter = DEFAULT_LEVEL_FILTER;
@@ -77,6 +114,7 @@ public class SyslogLoggerPlugin extends GlobalConfiguration {
 
     @Override
     public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+        syslogTransport = defaultValue(SyslogTransport.valueOf(formData.getString("syslogTransport")), SyslogTransport.UDP);
         syslogServerHostname = trimToNull(formData.optString("syslogServerHostname"));
         syslogServerPort = defaultValue(formData.optInt("syslogServerPort"), DEFAULT_SYSLOG_SERVER_PORT);
         levelFilter = defaultValue(LevelHelper.findLevel(trimToNull(formData.optString("levelFilter"))), DEFAULT_LEVEL_FILTER);
@@ -108,16 +146,27 @@ public class SyslogLoggerPlugin extends GlobalConfiguration {
             return;
         }
 
-        UdpSyslogMessageSender syslogMessageSender = new UdpSyslogMessageSender();
-        syslogMessageSender.setSyslogServerHostname(syslogServerHostname);
-        syslogMessageSender.setSyslogServerPort(syslogServerPort);
-        syslogMessageSender.setMessageFormat(messageFormat);
+        SyslogMessageSender syslogMessageSender = syslogTransport.create();
+        if (syslogMessageSender instanceof UdpSyslogMessageSender) {
+            UdpSyslogMessageSender messageSender = (UdpSyslogMessageSender) syslogMessageSender;
+            messageSender.setSyslogServerHostname(syslogServerHostname);
+            messageSender.setSyslogServerPort(syslogServerPort);
+            messageSender.setMessageFormat(messageFormat);
+        } else if (syslogMessageSender instanceof TcpSyslogMessageSender) {
+            TcpSyslogMessageSender messageSender = (TcpSyslogMessageSender) syslogMessageSender;
+            messageSender.setSyslogServerHostname(syslogServerHostname);
+            messageSender.setSyslogServerPort(syslogServerPort);
+            messageSender.setMessageFormat(messageFormat);
+        } else {
+            throw new IllegalStateException("Unsupported SyslogMessageSender");
+        }
+
         SyslogHandler handler = new SyslogHandler(syslogMessageSender, levelFilter, null);
         handler.setAppName(appName);
         handler.setMessageHostname(messageHostname);
         handler.setFacility(facility);
 
-        String msg = "Jenkins configured to output log messages to syslog server " + syslogServerHostname + ":" + syslogServerPort;
+        String msg = "Jenkins configured to output log messages to syslog server " + syslogServerHostname + ":" + syslogServerPort + " on transport " + syslogTransport.label();
         LogRecord logRecord = new LogRecord(Level.INFO, msg);
         logRecord.setLoggerName(LOGGER.getName());
         handler.publish(logRecord);
@@ -134,12 +183,6 @@ public class SyslogLoggerPlugin extends GlobalConfiguration {
         for (Level level : levels) {
             items.add(level.getName());
         }
-        return items;
-    }
-
-    public ListBoxModel doFillNetworkProtocolItems() {
-        ListBoxModel items = new ListBoxModel();
-        items.add("UDP");
         return items;
     }
 
@@ -167,6 +210,14 @@ public class SyslogLoggerPlugin extends GlobalConfiguration {
         Arrays.sort(facilities, Facility.comparator());
         for (Facility facility : facilities) {
             items.add(facility.label());
+        }
+        return items;
+    }
+
+    public ListBoxModel doFillSyslogTransportItems() {
+        ListBoxModel items = new ListBoxModel();
+        for(SyslogTransport transport:SyslogTransport.values()) {
+            items.add(transport.label(), transport.name());
         }
         return items;
     }
@@ -203,8 +254,8 @@ public class SyslogLoggerPlugin extends GlobalConfiguration {
         return messageFormat == null ? null : messageFormat.name();
     }
 
-    public String getNetworkProtocol() {
-        return "UDP";
+    public String getSyslogTransport() {
+        return syslogTransport == null ? null : syslogTransport.name();
     }
 
     @Override
@@ -212,6 +263,7 @@ public class SyslogLoggerPlugin extends GlobalConfiguration {
         return "SyslogLoggerPlugin{" +
                 "syslogServerHostname='" + syslogServerHostname + '\'' +
                 ", syslogServerPort=" + syslogServerPort +
+                ", syslogTransport=" + syslogTransport +
                 ", levelFilter=" + levelFilter +
                 ", appName='" + appName + '\'' +
                 ", messageHostname='" + messageHostname + '\'' +

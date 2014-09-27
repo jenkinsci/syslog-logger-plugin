@@ -12,9 +12,9 @@
             <f:select/>
         </f:entry>
         <f:advanced>
-            <f:entry field="networkProtocol" title="${%Syslog network protocol}">
-                <f:select/>
-            </f:entry>
+          <f:entry title="${%Syslog transport}" field="syslogTransport">
+            <f:select/>
+          </f:entry>
             <f:entry field="messageFormat" title="${%Syslog message format}">
                 <f:select/>
             </f:entry>
