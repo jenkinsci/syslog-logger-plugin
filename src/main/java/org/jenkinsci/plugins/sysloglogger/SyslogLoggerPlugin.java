@@ -39,10 +39,7 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
 /**
  * Send Jenkins CI logs to a Syslog Server.
@@ -165,6 +162,8 @@ public class SyslogLoggerPlugin extends GlobalConfiguration {
         handler.setAppName(appName);
         handler.setMessageHostname(messageHostname);
         handler.setFacility(facility);
+        // TODO support customization of the j.u.l. formatter
+        handler.setFormatter(new SimpleFormatter());
 
         String msg = "Jenkins configured to output log messages to syslog server " + syslogServerHostname + ":" + syslogServerPort + " on transport " + syslogTransport.label();
         LogRecord logRecord = new LogRecord(Level.INFO, msg);
