@@ -26,7 +26,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.520</version>
+        <version>1.580.3</version>
     </parent>
 
     <groupId>org.jenkins-ci.plugins</groupId>
@@ -60,12 +60,10 @@
             <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
-                <version>1.106</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.5</version>
             </plugin>
         </plugins>
     </build>
