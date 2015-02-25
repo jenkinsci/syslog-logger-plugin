@@ -52,7 +52,7 @@
         <dependency>
             <groupId>com.cloudbees</groupId>
             <artifactId>syslog-java-client</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.5</version>
         </dependency>
     </dependencies>
     <build>
