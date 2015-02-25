@@ -42,9 +42,12 @@ import java.util.Arrays;
 import java.util.logging.*;
 
 /**
+ * <p>
  * Send Jenkins CI logs to a Syslog Server.
- * <p/>
+ * </p>
+ * <p>
  * Features:
+ * </p>
  * <ul>
  * <li>Network protocol: UDP (TCP and TLS should come soon)</li>
  * <li>Syslog message format: RFC 3164 and RFC 5424</li>
