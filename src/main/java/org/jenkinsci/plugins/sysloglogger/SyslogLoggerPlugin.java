@@ -98,7 +98,7 @@ public class SyslogLoggerPlugin extends GlobalConfiguration {
         public abstract SyslogMessageSender create();
     }
 
-    private SyslogTransport syslogTransport;
+    private SyslogTransport syslogTransport = DEFAULT_SYSLOG_TRANSPORT;
     private String syslogServerHostname;
     private int syslogServerPort = DEFAULT_SYSLOG_SERVER_PORT;
     private Level levelFilter = DEFAULT_LEVEL_FILTER;
