@@ -260,6 +260,38 @@ public class SyslogLoggerPlugin extends GlobalConfiguration {
         return syslogTransport == null ? null : syslogTransport.name();
     }
 
+    public void setSyslogServerHostname(String syslogServerHostname) {
+        this.syslogServerHostname = syslogServerHostname;
+    }
+
+    public void setSyslogServerPort(int syslogServerPort) {
+        this.syslogServerPort = syslogServerPort;
+    }
+
+    public void setLevelFilter(String levelFilter) {
+        this.levelFilter = levelFilter == null ? null : Level.parse(levelFilter);
+    }
+
+    public void setMessageHostname(String messageHostname) {
+        this.messageHostname = messageHostname;
+    }
+
+    public void setAppName(String appName) {
+        this.appName = appName;
+    }
+
+    public void setFacility(String facility) {
+        this.facility = facility == null ? null : Facility.fromLabel(facility);
+    }
+
+    public void setSyslogTransport(String syslogTransport) {
+        this.syslogTransport = syslogTransport == null ? null : SyslogTransport.valueOf(syslogTransport);
+    }
+
+    public void setMessageFormat(String messageFormat) {
+        this.messageFormat = messageFormat == null ? null : MessageFormat.valueOf(messageFormat);
+    }
+
     @Override
     public String toString() {
         return "SyslogLoggerPlugin{" +
